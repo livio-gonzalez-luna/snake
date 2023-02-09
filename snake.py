@@ -3,35 +3,31 @@ import sys
 import random
 from json import *
 
-
 pygame.init()
+
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
 
 BUTTON_FONT = pygame.font.Font(None, 36) 
 TITLE_FONT = pygame.font.Font(None, 50)
 SCORE_FONT = pygame.font.SysFont("comicsans", 30)
+
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
+RED = (255, 0, 0)
+LIGHT_GREEN = (40, 210, 180)
+LIGH_BLUE = (0, 255, 255)
 
 
 config = {
-    "screen_X": 800,
-    "screen_Y": 600,
-    "screenTitle": "Snake Game",
     "blockSize": 20,
     "FPS": 10
 }
 
-colors = {
-    "MintyGreen": (40, 210, 180),
-    "Red": (255, 0, 0),
-    "lightBlue": (0, 255, 255)
-}
-
 snake = {
-    "x": config["screen_X"] / 2,
-    "y": config["screen_Y"] / 2,
+    "x": SCREEN_WIDTH / 2,
+    "y": SCREEN_HEIGHT / 2,
     "direction": "none",
-    "color": colors["Red"],
     "length": 0,
     "tail": []
 }
@@ -39,17 +35,27 @@ snake = {
 food = {
     "x": 0,
     "y": 0,
-    "color": colors["lightBlue"]
 }
 
-screen = pygame.display.set_mode((config["screen_X"], config["screen_Y"]))
-pygame.display.set_caption(config["screenTitle"])
+screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+pygame.display.set_caption("Snake Game")
 clock = pygame.time.Clock()
 
 def randomFood():
-    food["x"] = round(random.randrange(0, config["screen_X"] - config["blockSize"]) / config["blockSize"]) * config["blockSize"]
-    food["y"] = round(random.randrange(0, config["screen_Y"] - config["blockSize"]) / config["blockSize"]) * config["blockSize"]
+    food["x"] = round(random.randrange(0, SCREEN_WIDTH - config["blockSize"]) / config["blockSize"]) * config["blockSize"]
+    food["y"] = round(random.randrange(0, SCREEN_HEIGHT - config["blockSize"]) / config["blockSize"]) * config["blockSize"]
 
+def registerScore():
+    global username
+    with open("scores.json", "r") as file:
+        data = load(file)
+        
+        data["scores"].append({
+            "name": username,
+            "score": snake["length"]
+        })
+    with open("scores.json", "w") as file:
+        dump(data, file, indent=4)
 
 def menu():
     run = True
@@ -62,7 +68,7 @@ def menu():
         MENU_RECT = MENU_TEXT.get_rect(center=(400, 80))
         screen.blit(MENU_TEXT, MENU_RECT)
 
-        LABEL_TEXT = BUTTON_FONT.render("Enter your name:", 1, (0, 255, 0))
+        LABEL_TEXT = BUTTON_FONT.render("Enter your name:", 1, WHITE)
         LABEL_RECT = LABEL_TEXT.get_rect(center=(400, 150))
         screen.blit(LABEL_TEXT, LABEL_RECT)
         
@@ -75,49 +81,47 @@ def menu():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            
             if event.type == pygame.KEYDOWN:
-                if event.unicode.isalpha():
-                    username += event.unicode
-                elif event.type == pygame.K_ESCAPE:
+                if event.type == pygame.K_ESCAPE:
                     pygame.quit()
                     sys.exit()
+                elif event.unicode.isalpha():
+                    username += event.unicode
 
                 elif event.key == pygame.K_BACKSPACE:
                     username = username[:-1]
 
                 elif event.key == pygame.K_RETURN:
-                    LABEL_TEXT = SCORE_FONT.render("Name Added!", 1, WHITE)
-                    screen.blit(LABEL_TEXT, (config["screen_X"] / 2 - LABEL_TEXT.get_width() / 2, 150))
-                    main(username)
-            
-            
+                    LABEL_NAME = SCORE_FONT.render("Name Added!", 1, WHITE)
+                    LABEL_NAME_RECT = LABEL_NAME.get_rect(center=(400, 250))
+                    screen.blit(LABEL_NAME, LABEL_NAME_RECT)
+                    
+                    pygame.display.update()
+                    pygame.time.wait(2000)
+                    
+                    main()
 
         pygame.display.update()
     
-
-
-
-
 def drawGame(screen):
-    screen.fill(colors["MintyGreen"])
+    screen.fill(LIGHT_GREEN)
     score = snake["length"]
     
-    # draw score #
-    score_text = SCORE_FONT.render("Score: " + str(score), 1, WHITE)
-    screen.blit(score_text, (20, 20))
+    # Score #
+    SCORE_TEXT = SCORE_FONT.render("Score: " + str(score), 1, WHITE)
+    SCORE_TEXT_RECT = SCORE_TEXT.get_rect(center=(400, 20))
+    screen.blit(SCORE_TEXT, SCORE_TEXT_RECT)
     
-    # draw snake #
-    pygame.draw.rect(screen, snake["color"], (snake["x"], snake["y"], config["blockSize"], config["blockSize"]))
+    # Snake #
+    pygame.draw.rect(screen, RED, (snake["x"], snake["y"], config["blockSize"], config["blockSize"]))
     for tail in snake["tail"]:
-        pygame.draw.rect(screen, snake["color"], (tail[0], tail[1], config["blockSize"], config["blockSize"]))
+        pygame.draw.rect(screen, RED, (tail[0], tail[1], config["blockSize"], config["blockSize"]))
     
-    # draw food #
-    pygame.draw.rect(screen, food["color"], (food["x"], food["y"], config["blockSize"], config["blockSize"]))
+    # Food #
+    pygame.draw.rect(screen, LIGH_BLUE, (food["x"], food["y"], config["blockSize"], config["blockSize"]))
     pygame.display.update()
 
-
-def main(username):
+def main():
     randomFood()
     while True:
         clock.tick(config["FPS"])
@@ -127,6 +131,7 @@ def main(username):
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
+
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     pygame.quit()
@@ -160,7 +165,8 @@ def main(username):
 
         
         # Snake wrap around #
-        if snake["x"] < 0 or snake["x"] >= config["screen_X"] or snake["y"] < 0 or snake["y"] >= config["screen_Y"]:
+        if snake["x"] < 0 or snake["x"] >= SCREEN_WIDTH or snake["y"] < 0 or snake["y"] >= SCREEN_HEIGHT:
+            registerScore()
             menu()
         
         # TO CHECK IF SNAKE IS EATING FOOD #
@@ -179,12 +185,9 @@ def main(username):
         if [snake["x"], snake["y"]] in snake["tail"]:
             menu()
 
-        
-        
+        # TO START ADDING TAIL TO SNAKE #
         if len(snake["tail"]) > snake["length"]:
             del snake["tail"][0]
-            # if snake["length"] % 5 == 0:
-            #     config["FPS"] += 5
             
 if __name__ == "__main__":
     menu()
