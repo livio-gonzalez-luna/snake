@@ -1,0 +1,37 @@
+{
+    "snake": {
+        "easy": {
+            "x": 400,
+            "y": 400,
+            "length": 1,
+            "size": 30,
+            "speed": 5,
+            "tail": [],
+            "direction": "none"
+            
+        },
+        "medium": {
+            "x": 400 ,
+            "y": 400,
+            "length": 1,
+            "size": 30,
+            "speed": 15,
+            "tail": [],
+            "direction": "none"
+        },
+        "hard" : {
+            "x": 400,
+            "y": 400,
+            "length": 1,
+            "size": 10,
+            "speed": 30,
+            "tail": [],
+            "direction": "none"
+        }
+    },
+    "food": {
+        "x": 0,
+        "y": 0
+    }
+    
+}

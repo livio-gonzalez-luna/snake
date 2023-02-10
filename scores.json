@@ -1,7 +1,37 @@
 {
-    "scores":{
-        "jack":0,
-        "jill":0,
-        "joe":0
+    "easy": {
+        "Hugo": [
+            12,
+            15,
+            99,
+            99
+        ],
+        "Max": [
+            9
+        ],
+        "Nzo": [],
+        "LOLOLOLOLOLOLOL": [
+            15
+        ]
+    },
+    "medium": {
+        "Hugo": [
+            0,
+            3,
+            10
+        ],
+        "Max": [
+            9
+        ]
+    },
+    "hard": {
+        "Hugo": [
+            0,
+            3,
+            10
+        ],
+        "Max": [
+            9
+        ]
     }
 }
