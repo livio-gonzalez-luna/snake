@@ -1,149 +1,57 @@
-import pygame
-import sys
-import random
 from json import *
+import pygame
+import random
 
 pygame.init()
 
+# CONSTANTS #
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 800
+
+WHITE, BLACK = (255, 255, 255), (0, 0, 0)
+RED = (255, 0, 0)
+LIGHT_GREEN = (40, 210, 180)
+DARK_GREEN = (0, 100, 0)
+LIGHT_BLUE = (0, 255, 255)
 
 BUTTON_FONT = pygame.font.Font(None, 36) 
 TITLE_FONT = pygame.font.Font(None, 50)
 SCORE_FONT = pygame.font.SysFont("comicsans", 30)
 
-WHITE = (255, 255, 255)
-BLACK = (0, 0, 0)
-RED = (255, 0, 0)
-LIGHT_GREEN = (40, 210, 180)
-LIGH_BLUE = (0, 255, 255)
-
-SCREEN_WIDTH = 800
-SCREEN_HEIGHT = 600
-
-snake = {
-    "easy": {
-        "x": SCREEN_WIDTH / 2,
-        "y": SCREEN_HEIGHT / 2,
-        "direction": "none",
-        "length": 2,
-        "tail": [],
-        "speed": 5,
-        "size": 20
-        
-    },
-    "medium": {
-        "x": SCREEN_WIDTH / 2,
-        "y": SCREEN_HEIGHT / 2,
-        "direction": "none",
-        "length": 2,
-        "tail": [],
-        "speed": 10,
-        "size": 30
-    },
-    "hard": {
-        "x": SCREEN_WIDTH / 2,
-        "y": SCREEN_HEIGHT / 2,
-        "direction": "none",
-        "length": 2,
-        "tail": [],
-        "speed": 15,
-        "size": 40
-    }
-}
-
-
-food = {
-    "x": 0,
-    "y": 0,
-}
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Snake Game")
 clock = pygame.time.Clock()
 
-def randomFood(snake, difficulty, size):
+with open("gameConfig.json", "r") as file:
+    contents = file.read().strip()
+    gameConfig = loads(contents)
 
-    with open("snake.json", "r") as file:
-        snake = load(file)
-        
-        if difficulty == "easy":
-            food["x"] = round(random.randrange(0, SCREEN_WIDTH - snake["easy"][size]) / snake["easy"][size]) * snake["easy"][size]
-            food["y"] = round(random.randrange(0, SCREEN_HEIGHT - snake["easy"][size]) / snake["easy"][size]) * snake["easy"][size]
-        elif difficulty == "medium":
-            food["x"] = round(random.randrange(0, SCREEN_WIDTH - snake["medium"][size]) / snake["medium"][size]) * snake["medium"][size]
-            food["y"] = round(random.randrange(0, SCREEN_HEIGHT - snake["medium"][size]) / snake["medium"][size]) * snake["medium"][size]
-        elif difficulty == "hard":
-            food["x"] = round(random.randrange(0, SCREEN_WIDTH - snake["hard"][size]) / snake["hard"][size]) * snake["hard"][size]
-            food["y"] = round(random.randrange(0, SCREEN_HEIGHT - snake["hard"][size]) / snake["hard"][size]) * snake["hard"][size]
+with open("gameScores.json", "r") as file:
+    contents = file.read().strip()
+    gameScores = loads(contents)
+
+def random_food(difficulty):
+    snakeSize = gameConfig["snake"][difficulty]["size"]
+    x = round(random.randrange(0, SCREEN_WIDTH - snakeSize) / snakeSize) * snakeSize + snakeSize / 2
+    y = round(random.randrange(0, SCREEN_HEIGHT - snakeSize) / snakeSize) * snakeSize + snakeSize / 2
+    gameConfig["food"]["x"] = x 
+    gameConfig["food"]["y"] = y
+
+def registerScore(username, score, difficulty):
+        with open("gameScores.json", "r") as file:
+            gameScores = loads(file.read().strip())
     
-    # food["x"] = round(random.randrange(0, SCREEN_WIDTH - snake["difficulty"][size]) / snake["difficulty"][size]) * snake["difficulty"][size]
-    # food["y"] = round(random.randrange(0, SCREEN_HEIGHT - snake["difficulty"][size]) / snake["size"]) * snake["size"]
+        if username not in gameScores[difficulty]:
+            gameScores[difficulty][username] = []
 
-# def check_user(username, difficulty, data_score):
-#     if username not in data_score[difficulty]:
-#         return True
-#     return False
+        gameScores[difficulty][username].append(score)
 
-# def registerScore(username, snake["length"], difficulty):
-#     with open("scores.json", "r") as file:
-#         data_score = load(file)
-
-#     if check_user(username,difficulty,data_score):
-#         data_score[difficulty][username]=[]
-#         print(data_score[difficulty])
-
-#     data_score[difficulty][username].append(snake_len)
-
-#     with open("scores.json", "w") as file:
-#         dump(data_score, file, indent=4)
+        with open("gameScores.json", "w") as file:
+            dump(gameScores, file, indent=4)
 
 
-def menu():
-    run = True
-    username = ""
-
-    while run:
-        screen.fill(BLACK)
-
-        MENU_TEXT = TITLE_FONT.render("SNAKE GAME", True, (WHITE))
-        MENU_RECT = MENU_TEXT.get_rect(center=(400, 80))
-        screen.blit(MENU_TEXT, MENU_RECT)
-
-        LABEL_TEXT = BUTTON_FONT.render("Enter your name:", 1, WHITE)
-        LABEL_RECT = LABEL_TEXT.get_rect(center=(400, 150))
-        screen.blit(LABEL_TEXT, LABEL_RECT)
-        
-        INPUT_TEXT = BUTTON_FONT.render(username, True, WHITE)
-        INPUT_RECT = INPUT_TEXT.get_rect(center=(400, 200))
-        screen.blit(INPUT_TEXT, INPUT_RECT)
-
-        
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.KEYDOWN:
-                if event.type == pygame.K_ESCAPE:
-                    pygame.quit()
-                    sys.exit()
-                elif event.unicode.isalpha():
-                    username += event.unicode
-
-                elif event.key == pygame.K_BACKSPACE:
-                    username = username[:-1]
-
-                elif event.key == pygame.K_RETURN:
-                    LABEL_NAME = SCORE_FONT.render("Name Added!", 1, WHITE)
-                    LABEL_NAME_RECT = LABEL_NAME.get_rect(center=(400, 250))
-                    screen.blit(LABEL_NAME, LABEL_NAME_RECT)
-                    
-                    pygame.display.update()
-                    pygame.time.wait(2000)
-                    
-                    diffChoice()
-
-        pygame.display.update()
-
-def diffChoice():
+def level():
     run = True
     while run:
         screen.fill(BLACK)
@@ -168,107 +76,261 @@ def diffChoice():
         HARD_RECT = HARD_TEXT.get_rect(center=(400, 300))
         screen.blit(HARD_TEXT, HARD_RECT)
 
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            if event.type == pygame.KEYDOWN:
-                if event.type == pygame.K_ESCAPE:
-                    pygame.quit()
-                    sys.exit()
-                elif event.key == pygame.K_e:
-                    main()
-                elif event.key == pygame.K_m:
-                    main()
-                elif event.key == pygame.K_h:
-                    main()
+        SCOREBOARD_TEXT = BUTTON_FONT.render("Scoreboard", 1, WHITE)
+        SCOREBOARD_RECT = SCOREBOARD_TEXT.get_rect(center=(400, 350))
+        screen.blit(SCOREBOARD_TEXT, SCOREBOARD_RECT)
 
         pygame.display.update()
+        pygame.time.delay(100)
 
-def drawGame(snake):
-    # difficulty = snake["difficulty"]
-    screen.fill(LIGHT_GREEN)
-    score = snake["length"]
-    
-    # Score #
-    SCORE_TEXT = SCORE_FONT.render("Score: " + str(score), 1, WHITE)
-    SCORE_TEXT_RECT = SCORE_TEXT.get_rect(center=(400, 20))
-    screen.blit(SCORE_TEXT, SCORE_TEXT_RECT)
-    
-    # Snake #
-    pygame.draw.rect(screen, RED, (snake["x"], snake["y"], snake["size"], snake["size"]))
-    for tail in snake["tail"]:
-        pygame.draw.rect(screen, RED, (tail[0], tail[1], snake["size"], snake["size"]))
-    
-    # Food #
-    pygame.draw.rect(screen, LIGH_BLUE, (food["x"], food["y"], snake["size"], snake["size"]))
-    pygame.display.update()
-
-def main():
-    randomFood()
-    while True:
-        clock.tick(snake["speed"])
-        drawGame()
-        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
-                sys.exit()
-
+                quit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     pygame.quit()
-                    sys.exit()
+                    quit()
+                elif event.key == pygame.K_e:
+                    registerUsername("easy")
+                elif event.key == pygame.K_m:
+                    registerUsername("medium")
+                elif event.key == pygame.K_h:
+                    registerUsername("hard")
+                elif event.key == pygame.K_s:
+                    scoreboard()
+
+
+
+
+def scoreboard():
+    run = True
+    while run:
+        screen.fill(BLACK)
+
+        LABEL_TEXT = BUTTON_FONT.render("Scoreboard", 1, WHITE)
+        LABEL_RECT = LABEL_TEXT.get_rect(center=(400, 150))
+        screen.blit(LABEL_TEXT, LABEL_RECT)
+
+        y_offset = 200
+
+        for difficulty in gameScores:
+            difficulty_text = BUTTON_FONT.render(difficulty.capitalize(), 1, WHITE)
+            difficulty_rect = difficulty_text.get_rect(x=200, y=y_offset)
+            screen.blit(difficulty_text, difficulty_rect)
+
+            y_offset += 250
+
+            # scores = gameScores[difficulty]
+            # scores = sorted(scores.items(), key=lambda x: sum(x[1]), reverse=True)
+            # scores = scores[:10]
+
+            for username, scores in scores:
+                user_text = BUTTON_FONT.render(username, 1, WHITE)
+                user_rect = user_text.get_rect(x=200, y=y_offset)
+                screen.blit(user_text, user_rect)
+
+                score_text = BUTTON_FONT.render(str(sum(scores)), 1, WHITE)
+                score_rect = score_text.get_rect(x=400, y=y_offset)
+                screen.blit(score_text, score_rect)
+
+                y_offset += 50
+
+        pygame.display.update()
+        pygame.time.delay(100)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    level()
+
+
+
+
+
+# def scoreboard(difficulty):
+#     run = True
+#     while run:
+#         screen.fill(BLACK)
+
+#         LABEL_TEXT = BUTTON_FONT.render("Scoreboard", 1, WHITE)
+#         LABEL_RECT = LABEL_TEXT.get_rect(center=(400, 150))
+#         screen.blit(LABEL_TEXT, LABEL_RECT)
+
+#         pygame.display.update()
+#         pygame.time.delay(100)
+
+#         for event in pygame.event.get():
+#             if event.type == pygame.QUIT:
+#                 pygame.quit()
+#                 quit()
+#             if event.type == pygame.KEYDOWN:
+#                 if event.key == pygame.K_ESCAPE:
+#                     level()
+                
+
+
+def registerUsername(difficulty):
+    run = True
+    username = ""
+    
+    while run:
+        screen.fill(BLACK)
+
+        LABEL_TEXT = BUTTON_FONT.render("Enter your username:", 1, WHITE)
+        LABEL_RECT = LABEL_TEXT.get_rect(center=(400, 150))
+        screen.blit(LABEL_TEXT, LABEL_RECT)
+
+        USERNAME_TEXT = BUTTON_FONT.render(username, 1, WHITE)
+        USERNAME_TEXT_RECT = USERNAME_TEXT.get_rect(center=(400, 200))
+        screen.blit(USERNAME_TEXT, USERNAME_TEXT_RECT)
+
+        pygame.display.update()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    quit()
+                
+                elif event.unicode.isalpha():
+                    username += event.unicode
+            
+                elif event.key == pygame.K_RETURN:
+                    run = False
+                    try:
+                        with open("gameScores.json", "r") as file:
+                            gameScores = loads(file.read().strip())
+                    except FileNotFoundError:
+                        gameScores = {}
+                    if difficulty not in gameScores:
+                        gameScores[difficulty] = {}
+
+                    gameScores[difficulty][username] = []
+
+                    with open("gameScores.json", "w") as file:
+                        dump(gameScores, file, indent=4)
+
+                    game(difficulty, username)
+
+                elif event.key == pygame.K_BACKSPACE:
+                    username = username[:-1]
+
+
+# def get_top_scores(difficulty, number_of_scores):
+#     try:
+#         with open("gameScores.json", "r") as file:
+#             gameScores = load(file)
+#     except FileNotFoundError:
+#         return []
+    
+#     if difficulty not in gameScores:
+#         return []
+    
+#     scores_list = [(username, sum(scores)) for username, scores in gameScores[difficulty].items()]
+#     scores_list.sort(key=lambda x: x[1], reverse=True)
+#     return scores_list[:number_of_scores]
+        
+def draw(difficulty):
+    screen.fill(LIGHT_BLUE)
+    score = gameConfig["snake"][difficulty]["length"] - 2
+    snakeSize = gameConfig["snake"][difficulty]["size"]
+    snakeTail = gameConfig["snake"][difficulty]["tail"] 
+    snakeX = gameConfig["snake"][difficulty]["x"]
+    snakeY = gameConfig["snake"][difficulty]["y"]
+    
+    # Score #
+    score_text = SCORE_FONT.render("Score: " + str(score), 1, DARK_GREEN)
+    score_text_rect = score_text.get_rect(center=(SCREEN_WIDTH - 100, 50))
+    screen.blit(score_text, score_text_rect)
+
+    ## SNAKE ##
+    x = snakeX - snakeSize / 2
+    y = snakeY - snakeSize / 2 
+    pygame.draw.rect(screen, DARK_GREEN, (x, y, snakeSize, snakeSize))
+    
+    for tail in snakeTail:
+        tailX = tail[0] - snakeSize / 2
+        tailY = tail[1] - snakeSize / 2
+        pygame.draw.rect(screen, DARK_GREEN, (tailX, tailY, snakeSize, snakeSize))
+    
+    # Food #
+    foodX = gameConfig["food"]["x"] - snakeSize / 2 - 5
+    foodY = gameConfig["food"]["y"] - snakeSize / 2 - 5
+    pygame.draw.rect(screen, RED, (foodX, foodY, snakeSize, snakeSize))
+    
+    pygame.display.update()
+
+
+def game(difficulty, username):
+    random_food(difficulty)
+
+    while True:
+        clock.tick(gameConfig["snake"][difficulty]["speed"])
+        draw(difficulty)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    level()
             
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
-                    if snake["direction"] != "down":
-                        snake["direction"] = "up"
+                    if gameConfig["snake"][difficulty]["direction"] != "down":
+                        gameConfig["snake"][difficulty]["direction"] = "up"
                 elif event.key == pygame.K_DOWN:
-                    if snake["direction"] != "up":
-                        snake["direction"] = "down"
+                    if gameConfig["snake"][difficulty]["direction"] != "up":
+                        gameConfig["snake"][difficulty]["direction"] = "down"
                 elif event.key == pygame.K_LEFT:
-                    if snake["direction"] != "right":
-                        snake["direction"] = "left"
+                    if gameConfig["snake"][difficulty]["direction"] != "right":
+                        gameConfig["snake"][difficulty]["direction"] = "left"
                 elif event.key == pygame.K_RIGHT:
-                    if snake["direction"] != "left":
-                        snake["direction"] = "right"
+                    if gameConfig["snake"][difficulty]["direction"] != "left":
+                        gameConfig["snake"][difficulty]["direction"] = "right"
 
-        # Snake movement #   
-        if snake["direction"] == "up":
-            snake["y"] -= snake["size"]
-        elif snake["direction"] == "down":
-            snake["y"] += snake["size"]
-        elif snake["direction"] == "left":
-            snake["x"] -= snake["size"]
-        elif snake["direction"] == "right":
-            snake["x"] += snake["size"]
+        if gameConfig["snake"][difficulty]["direction"] == "up":
+            gameConfig["snake"][difficulty]["y"] -= gameConfig["snake"][difficulty]["size"]
+        elif gameConfig["snake"][difficulty]["direction"] == "down":
+            gameConfig["snake"][difficulty]["y"] += gameConfig["snake"][difficulty]["size"]
+        elif gameConfig["snake"][difficulty]["direction"] == "left":
+            gameConfig["snake"][difficulty]["x"] -= gameConfig["snake"][difficulty]["size"]
+        elif gameConfig["snake"][difficulty]["direction"] == "right":
+            gameConfig["snake"][difficulty]["x"] += gameConfig["snake"][difficulty]["size"]
 
+        # BORDER COLLISION #
+        if (gameConfig["snake"][difficulty]["x"] + 5) < 0 or (gameConfig["snake"][difficulty]["x"] + 5) > SCREEN_WIDTH or (gameConfig["snake"][difficulty]["y"] + 5) < 0 or (gameConfig["snake"][difficulty]["y"] + 5) > SCREEN_HEIGHT:
+            registerScore(username, gameConfig["snake"][difficulty]["length"] , difficulty)
+            pygame.time.delay(100)
+            level()
+
+        # FOOD COLLISION #
+        if (gameConfig["snake"][difficulty]["x"] + 5) == gameConfig["food"]["x"] and (gameConfig["snake"][difficulty]["y"] + 5) == gameConfig["food"]["y"]:
+            random_food(difficulty)
+            gameConfig["snake"][difficulty]["length"] += 1
+
+        # ADD TAIL #
+        gameConfig["snake"][difficulty]["tail"].append((gameConfig["snake"][difficulty]["x"], gameConfig["snake"][difficulty]["y"]))
+        if len(gameConfig["snake"][difficulty]["tail"]) > gameConfig["snake"][difficulty]["length"]:
+            del gameConfig["snake"][difficulty]["tail"][0]
         
-        # Snake wrap around #
-        if snake["x"] < 0 or snake["x"] >= SCREEN_WIDTH or snake["y"] < 0 or snake["y"] >= SCREEN_HEIGHT:
-            # registerScore(username, snake["length"], difficulty)
-            menu()
-        
-        # TO CHECK IF SNAKE IS EATING FOOD #
-        if snake["x"] == food["x"] and snake["y"] == food["y"]:
-            snake["length"] += 1
-            randomFood()
-            if snake["length"] > 0:
-                snake["tail"].append((snake["x"], snake["y"]))
-                
-        # ADDING TAIL TO SNAKE #
-        if snake["length"] > 0:
-            snake["tail"].append((snake["x"], snake["y"]))
+        # SNAKE COLLISION #
+        for tail in gameConfig["snake"][difficulty]["tail"][:-1]:
+            if tail == (gameConfig["snake"][difficulty]["x"], gameConfig["snake"][difficulty]["y"]):
+                pygame.time.delay(100)
+                level()
 
-        # TO CHECK IF SNAKE IS EATING ITSELF #
-        if [snake["x"], snake["y"]] in snake["tail"]:
-            menu()
 
-        # TO START ADDING TAIL TO SNAKE #
-        if len(snake["tail"]) > snake["length"]:
-            del snake["tail"][0]
-        
-       
-if __name__ == "__main__":
-    menu()
+
+level()
+
+
