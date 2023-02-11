@@ -2,7 +2,6 @@ from json import *
 import pygame
 import random
 
-
 pygame.init()
 
 # CONSTANTS #
@@ -19,13 +18,18 @@ BUTTON_FONT = pygame.font.Font(None, 36)
 TITLE_FONT = pygame.font.Font(None, 50)
 SCORE_FONT = pygame.font.SysFont("comicsans", 30)
 
-with open("gameConfig.json", "r") as file:
-    contents = file.read().strip()
-    gameConfig = loads(contents)
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Snake Game")
 clock = pygame.time.Clock()
+
+with open("gameConfig.json", "r") as file:
+    contents = file.read().strip()
+    gameConfig = loads(contents)
+
+with open("gameScores.json", "r") as file:
+    contents = file.read().strip()
+    gameScores = loads(contents)
 
 def random_food(difficulty):
     snakeSize = gameConfig["snake"][difficulty]["size"]
@@ -33,8 +37,20 @@ def random_food(difficulty):
     y = round(random.randrange(0, SCREEN_HEIGHT - snakeSize) / snakeSize) * snakeSize + snakeSize / 2
     gameConfig["food"]["x"] = x 
     gameConfig["food"]["y"] = y
+
+def registerScore(username, score, difficulty):
+        with open("gameScores.json", "r") as file:
+            gameScores = loads(file.read().strip())
     
-def menu():
+        if username not in gameScores[difficulty]:
+            gameScores[difficulty][username] = []
+
+        gameScores[difficulty][username].append(score)
+
+        with open("gameScores.json", "w") as file:
+            dump(gameScores, file, indent=4)
+
+def level():
     run = True
     while run:
         screen.fill(BLACK)
@@ -71,14 +87,78 @@ def menu():
                     pygame.quit()
                     quit()
                 elif event.key == pygame.K_e:
-                    game("easy")
+                    registerUsername("easy")
                 elif event.key == pygame.K_m:
-                    game("medium")
+                    registerUsername("medium")
                 elif event.key == pygame.K_h:
-                    game("hard")
+                    registerUsername("hard")
          
 
+def registerUsername(difficulty):
+    run = True
+    username = ""
+    
+    while run:
+        screen.fill(BLACK)
 
+        LABEL_TEXT = BUTTON_FONT.render("Enter your username:", 1, WHITE)
+        LABEL_RECT = LABEL_TEXT.get_rect(center=(400, 150))
+        screen.blit(LABEL_TEXT, LABEL_RECT)
+
+        USERNAME_TEXT = BUTTON_FONT.render(username, 1, WHITE)
+        USERNAME_TEXT_RECT = USERNAME_TEXT.get_rect(center=(400, 200))
+        screen.blit(USERNAME_TEXT, USERNAME_TEXT_RECT)
+
+        pygame.display.update()
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+            
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    pygame.quit()
+                    quit()
+                
+                elif event.unicode.isalpha():
+                    username += event.unicode
+            
+                elif event.key == pygame.K_RETURN:
+                    run = False
+                    try:
+                        with open("gameScores.json", "r") as file:
+                            gameScores = loads(file.read().strip())
+                    except FileNotFoundError:
+                        gameScores = {}
+                    if difficulty not in gameScores:
+                        gameScores[difficulty] = {}
+
+                    gameScores[difficulty][username] = []
+
+                    with open("gameScores.json", "w") as file:
+                        dump(gameScores, file, indent=4)
+
+                    game(difficulty, username)
+
+                elif event.key == pygame.K_BACKSPACE:
+                    username = username[:-1]
+
+
+# def get_top_scores(difficulty, number_of_scores):
+#     try:
+#         with open("gameScores.json", "r") as file:
+#             gameScores = load(file)
+#     except FileNotFoundError:
+#         return []
+    
+#     if difficulty not in gameScores:
+#         return []
+    
+#     scores_list = [(username, sum(scores)) for username, scores in gameScores[difficulty].items()]
+#     scores_list.sort(key=lambda x: x[1], reverse=True)
+#     return scores_list[:number_of_scores]
+        
 def draw(difficulty):
     screen.fill(LIGHT_BLUE)
     score = gameConfig["snake"][difficulty]["length"] - 2
@@ -110,8 +190,7 @@ def draw(difficulty):
     pygame.display.update()
 
 
-
-def game(difficulty):
+def game(difficulty, username):
     random_food(difficulty)
 
     while True:
@@ -124,7 +203,7 @@ def game(difficulty):
                 quit()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    menu()
+                    level()
             
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
@@ -151,7 +230,9 @@ def game(difficulty):
 
         # BORDER COLLISION #
         if (gameConfig["snake"][difficulty]["x"] + 5) < 0 or (gameConfig["snake"][difficulty]["x"] + 5) > SCREEN_WIDTH or (gameConfig["snake"][difficulty]["y"] + 5) < 0 or (gameConfig["snake"][difficulty]["y"] + 5) > SCREEN_HEIGHT:
-            menu()
+            registerScore(username, gameConfig["snake"][difficulty]["length"] , difficulty)
+            pygame.time.delay(100)
+            level()
 
         # FOOD COLLISION #
         if (gameConfig["snake"][difficulty]["x"] + 5) == gameConfig["food"]["x"] and (gameConfig["snake"][difficulty]["y"] + 5) == gameConfig["food"]["y"]:
@@ -166,10 +247,11 @@ def game(difficulty):
         # SNAKE COLLISION #
         for tail in gameConfig["snake"][difficulty]["tail"][:-1]:
             if tail == (gameConfig["snake"][difficulty]["x"], gameConfig["snake"][difficulty]["y"]):
-                menu()
+                pygame.time.delay(100)
+                level()
 
 
-if __name__ == "__main__":
-    menu()
+
+level()
 
 
