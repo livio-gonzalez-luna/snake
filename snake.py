@@ -285,6 +285,7 @@ def game(difficulty, username):
         # SNAKE COLLISION #
         for tail in gameConfig["snake"][difficulty]["tail"][:-1]:
             if tail == (gameConfig["snake"][difficulty]["x"], gameConfig["snake"][difficulty]["y"]):
+                registerScore(username, gameConfig["snake"][difficulty]["length"] , difficulty)
                 pygame.time.delay(100)
                 level()
 
