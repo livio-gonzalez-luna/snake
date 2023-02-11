@@ -101,8 +101,6 @@ def level():
                     scoreboard()
 
 
-
-
 def scoreboard():
     run = True
     while run:
@@ -146,31 +144,6 @@ def scoreboard():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     level()
-
-
-
-
-
-# def scoreboard(difficulty):
-#     run = True
-#     while run:
-#         screen.fill(BLACK)
-
-#         LABEL_TEXT = BUTTON_FONT.render("Scoreboard", 1, WHITE)
-#         LABEL_RECT = LABEL_TEXT.get_rect(center=(400, 150))
-#         screen.blit(LABEL_TEXT, LABEL_RECT)
-
-#         pygame.display.update()
-#         pygame.time.delay(100)
-
-#         for event in pygame.event.get():
-#             if event.type == pygame.QUIT:
-#                 pygame.quit()
-#                 quit()
-#             if event.type == pygame.KEYDOWN:
-#                 if event.key == pygame.K_ESCAPE:
-#                     level()
-                
 
 
 def registerUsername(difficulty):
@@ -223,20 +196,6 @@ def registerUsername(difficulty):
                 elif event.key == pygame.K_BACKSPACE:
                     username = username[:-1]
 
-
-# def get_top_scores(difficulty, number_of_scores):
-#     try:
-#         with open("gameScores.json", "r") as file:
-#             gameScores = load(file)
-#     except FileNotFoundError:
-#         return []
-    
-#     if difficulty not in gameScores:
-#         return []
-    
-#     scores_list = [(username, sum(scores)) for username, scores in gameScores[difficulty].items()]
-#     scores_list.sort(key=lambda x: x[1], reverse=True)
-#     return scores_list[:number_of_scores]
         
 def draw(difficulty):
     screen.fill(LIGHT_BLUE)
