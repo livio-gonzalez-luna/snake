@@ -220,7 +220,6 @@ def main():
                     pygame.quit()
                     sys.exit()
             
-
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_UP:
                     if snake["direction"] != "down":
@@ -235,17 +234,13 @@ def main():
                     if snake["direction"] != "left":
                         snake["direction"] = "right"
 
-
         # Snake movement #   
         if snake["direction"] == "up":
             snake["y"] -= snake["size"]
-        
         elif snake["direction"] == "down":
             snake["y"] += snake["size"]
-        
         elif snake["direction"] == "left":
             snake["x"] -= snake["size"]
-        
         elif snake["direction"] == "right":
             snake["x"] += snake["size"]
 
