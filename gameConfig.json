@@ -24,7 +24,7 @@
             "y": 400,
             "length": 1,
             "size": 10,
-            "speed": 30,
+            "speed": 50,
             "tail": [],
             "direction": "none"
         }

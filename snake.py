@@ -5,6 +5,7 @@ import random
 pygame.init()
 
 # CONSTANTS #
+
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 800
 
@@ -18,19 +19,22 @@ BUTTON_FONT = pygame.font.Font(None, 36)
 TITLE_FONT = pygame.font.Font(None, 50)
 SCORE_FONT = pygame.font.SysFont("comicsans", 30)
 
-
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("Snake Game")
 clock = pygame.time.Clock()
 
+# LOAD GAME CONFIG #
 with open("gameConfig.json", "r") as file:
     contents = file.read().strip()
     gameConfig = loads(contents)
 
+# LOAD GAME SCORES #
 with open("gameScores.json", "r") as file:
     contents = file.read().strip()
     gameScores = loads(contents)
 
+# FUNCTIONS #
+# to spot the food #
 def random_food(difficulty):
     snakeSize = gameConfig["snake"][difficulty]["size"]
     x = round(random.randrange(0, SCREEN_WIDTH - snakeSize) / snakeSize) * snakeSize + snakeSize / 2
@@ -38,19 +42,25 @@ def random_food(difficulty):
     gameConfig["food"]["x"] = x 
     gameConfig["food"]["y"] = y
 
+# to register the score #
 def registerScore(username, score, difficulty):
         with open("gameScores.json", "r") as file:
             gameScores = loads(file.read().strip())
-    
         if username not in gameScores[difficulty]:
             gameScores[difficulty][username] = []
-
         gameScores[difficulty][username].append(score)
-
         with open("gameScores.json", "w") as file:
             dump(gameScores, file, indent=4)
 
+# to reset the game #
+def resetGame(difficulty):
+    gameConfig["snake"][difficulty]["x"] = 400
+    gameConfig["snake"][difficulty]["y"] = 400
+    gameConfig["snake"][difficulty]["tail"] = []
+    gameConfig["snake"][difficulty]["length"] = 1
 
+# SCREENS #
+# level screen #
 def level():
     run = True
     while run:
@@ -101,34 +111,37 @@ def level():
                     scoreboard()
 
 
+# scoreboard screen #
 def scoreboard():
     run = True
     while run:
         screen.fill(BLACK)
 
-        LABEL_TEXT = BUTTON_FONT.render("Scoreboard", 1, WHITE)
-        LABEL_RECT = LABEL_TEXT.get_rect(center=(400, 150))
+        LABEL_TEXT = TITLE_FONT.render("Scoreboard", 1, LIGHT_GREEN)
+        LABEL_RECT = LABEL_TEXT.get_rect(center=(400, 50))
         screen.blit(LABEL_TEXT, LABEL_RECT)
 
-        y_offset = 200
+        y_offset = 130
 
         for difficulty in gameScores:
-            difficulty_text = BUTTON_FONT.render(difficulty.capitalize(), 1, WHITE)
+            difficulty_text = BUTTON_FONT.render(difficulty.capitalize(), 1, LIGHT_BLUE)
             difficulty_rect = difficulty_text.get_rect(x=200, y=y_offset)
             screen.blit(difficulty_text, difficulty_rect)
 
-            y_offset += 250
+            y_offset += 50
 
-            # scores = gameScores[difficulty]
-            # scores = sorted(scores.items(), key=lambda x: sum(x[1]), reverse=True)
-            # scores = scores[:10]
+            scores = gameScores[difficulty]
+            scores = sorted(scores.items(), key=lambda x: max(x[1]), reverse=True)
+            scores = scores[:3]
 
             for username, scores in scores:
+                if scores == []:
+                    continue
                 user_text = BUTTON_FONT.render(username, 1, WHITE)
                 user_rect = user_text.get_rect(x=200, y=y_offset)
                 screen.blit(user_text, user_rect)
 
-                score_text = BUTTON_FONT.render(str(sum(scores)), 1, WHITE)
+                score_text = BUTTON_FONT.render(str(max(scores)), 1, WHITE)
                 score_rect = score_text.get_rect(x=400, y=y_offset)
                 screen.blit(score_text, score_rect)
 
@@ -146,6 +159,7 @@ def scoreboard():
                     level()
 
 
+# register username screen #
 def registerUsername(difficulty):
     run = True
     username = ""
@@ -170,8 +184,7 @@ def registerUsername(difficulty):
             
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    pygame.quit()
-                    quit()
+                    level()
                 
                 elif event.unicode.isalpha():
                     username += event.unicode
@@ -196,10 +209,11 @@ def registerUsername(difficulty):
                 elif event.key == pygame.K_BACKSPACE:
                     username = username[:-1]
 
-        
+
+# game draw funciton #        
 def draw(difficulty):
     screen.fill(LIGHT_BLUE)
-    score = gameConfig["snake"][difficulty]["length"] - 2
+    score = gameConfig["snake"][difficulty]["length"] - 1
     snakeSize = gameConfig["snake"][difficulty]["size"]
     snakeTail = gameConfig["snake"][difficulty]["tail"] 
     snakeX = gameConfig["snake"][difficulty]["x"]
@@ -210,7 +224,7 @@ def draw(difficulty):
     score_text_rect = score_text.get_rect(center=(SCREEN_WIDTH - 100, 50))
     screen.blit(score_text, score_text_rect)
 
-    ## SNAKE ##
+    # Snake#
     x = snakeX - snakeSize / 2
     y = snakeY - snakeSize / 2 
     pygame.draw.rect(screen, DARK_GREEN, (x, y, snakeSize, snakeSize))
@@ -227,7 +241,7 @@ def draw(difficulty):
     
     pygame.display.update()
 
-
+# game screen #
 def game(difficulty, username):
     random_food(difficulty)
 
@@ -257,6 +271,7 @@ def game(difficulty, username):
                     if gameConfig["snake"][difficulty]["direction"] != "left":
                         gameConfig["snake"][difficulty]["direction"] = "right"
 
+        # SNAKE MOVEMENT #s
         if gameConfig["snake"][difficulty]["direction"] == "up":
             gameConfig["snake"][difficulty]["y"] -= gameConfig["snake"][difficulty]["size"]
         elif gameConfig["snake"][difficulty]["direction"] == "down":
@@ -270,6 +285,7 @@ def game(difficulty, username):
         if (gameConfig["snake"][difficulty]["x"] + 5) < 0 or (gameConfig["snake"][difficulty]["x"] + 5) > SCREEN_WIDTH or (gameConfig["snake"][difficulty]["y"] + 5) < 0 or (gameConfig["snake"][difficulty]["y"] + 5) > SCREEN_HEIGHT:
             registerScore(username, gameConfig["snake"][difficulty]["length"] , difficulty)
             pygame.time.delay(100)
+            resetGame(difficulty)
             level()
 
         # FOOD COLLISION #
@@ -287,10 +303,9 @@ def game(difficulty, username):
             if tail == (gameConfig["snake"][difficulty]["x"], gameConfig["snake"][difficulty]["y"]):
                 registerScore(username, gameConfig["snake"][difficulty]["length"] , difficulty)
                 pygame.time.delay(100)
+                resetGame(difficulty)
                 level()
 
 
-
-level()
-
-
+if __name__ == "__main__":
+    level()
